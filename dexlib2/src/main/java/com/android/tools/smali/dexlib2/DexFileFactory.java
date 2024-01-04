@@ -394,7 +394,7 @@ public final class DexFileFactory {
             if (exactMatch) {
                 try {
                     MultiDexContainer.DexEntry<? extends DexBackedDexFile> entry = dexContainer.getEntry(targetEntry);
-                    if (entry == null) {
+                    if (entry == null || entry.getDexFile() == null) {
                         throw new DexFileNotFoundException("Could not find entry %s in %s.", targetEntry, filename);
                     }
                     return entry;
