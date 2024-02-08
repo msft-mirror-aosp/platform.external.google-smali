@@ -1,17 +1,17 @@
 /*
- * Copyright 2012, Google LLC
+ * Copyright 2024, Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
  *
- *     * Redistributions of source code must retain the above copyright
+ * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above
+ * Redistributions in binary form must reproduce the above
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google LLC nor the names of its
+ * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -28,40 +28,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.android.tools.smali.dexlib2.base.value;
+package com.android.tools.smali.util;
 
-import com.android.tools.smali.dexlib2.ValueType;
-import com.android.tools.smali.dexlib2.iface.value.EncodedValue;
-import com.android.tools.smali.dexlib2.iface.value.FieldEncodedValue;
-import com.android.tools.smali.dexlib2.formatter.DexFormatter;
+import java.util.Iterator;
+import java.util.function.Function;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+/**
+ * An iterator that will return the results of applying {@code transformFunction} to each element of
+ * {@code backingIterator}.
+ * <p>
+ * The returned iterator supports {@code remove()} if {@code backingIterator} does.
+ */
+public class TransformedIterator<F extends @Nullable Object, T extends @Nullable Object>
+        implements Iterator<T> {
+    final Iterator<? extends F> backingIterator;
+    final Function<F, T> transformFunction;
 
-public abstract class BaseFieldEncodedValue implements FieldEncodedValue {
-    @Override
-    public int hashCode() {
-        return getValue().hashCode();
+    public TransformedIterator(Iterator<? extends F> backingIterator,
+            Function<F, T> transformFunction) {
+        this.backingIterator = backingIterator;
+        this.transformFunction = transformFunction;
     }
 
     @Override
-    public boolean equals(@Nullable Object o) {
-        if (o instanceof FieldEncodedValue) {
-            return getValue().equals(((FieldEncodedValue)o).getValue());
-        }
-        return false;
+    public final boolean hasNext() {
+        return backingIterator.hasNext();
     }
 
     @Override
-    public int compareTo(@Nonnull EncodedValue o) {
-        int res = Integer.compare(getValueType(), o.getValueType());
-        if (res != 0) return res;
-        return getValue().compareTo(((FieldEncodedValue)o).getValue());
+    public final T next() {
+        return transformFunction.apply(backingIterator.next());
     }
 
-    public int getValueType() { return ValueType.FIELD; }
-
-    @Override public String toString() {
-        return DexFormatter.INSTANCE.getEncodedValue(this);
+    @Override
+    public final void remove() {
+        backingIterator.remove();
     }
 }

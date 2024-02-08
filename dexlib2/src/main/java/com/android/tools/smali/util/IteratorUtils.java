@@ -1,17 +1,17 @@
 /*
- * Copyright 2013, Google LLC
+ * Copyright 2024, Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
  *
- *     * Redistributions of source code must retain the above copyright
+ * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above
+ * Redistributions in binary form must reproduce the above
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google LLC nor the names of its
+ * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -28,19 +28,20 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.android.tools.smali.dexlib2.base;
+package com.android.tools.smali.util;
 
-import com.android.tools.smali.dexlib2.iface.ExceptionHandler;
-import com.android.tools.smali.dexlib2.iface.TryBlock;
+import java.util.Iterator;
 
-public abstract class BaseTryBlock<EH extends ExceptionHandler> implements TryBlock<EH> {
-    @Override public boolean equals(Object o) {
-        if (o instanceof TryBlock) {
-            TryBlock<? extends ExceptionHandler> other = (TryBlock<? extends ExceptionHandler>)o;
-            return getStartCodeAddress() == other.getStartCodeAddress() &&
-                    getCodeUnitCount() == other.getCodeUnitCount() &&
-                    getExceptionHandlers().equals(other.getExceptionHandlers());
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+public final class IteratorUtils {
+
+    public static <T extends @Nullable Object> T getLast(Iterator<T> iterator) {
+        while (true) {
+            T current = iterator.next();
+            if (!iterator.hasNext()) {
+                return current;
+            }
         }
-        return false;
     }
 }
