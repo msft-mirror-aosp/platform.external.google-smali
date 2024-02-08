@@ -36,8 +36,8 @@ import com.android.tools.smali.dexlib2.iface.MultiDexContainer;
 import com.android.tools.smali.dexlib2.util.DexUtil;
 import com.android.tools.smali.dexlib2.util.DexUtil.InvalidFile;
 import com.android.tools.smali.dexlib2.util.DexUtil.UnsupportedFile;
-import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
+import com.android.tools.smali.util.InputStreamUtil;
+
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile.NotADexFile;
 
 import java.io.BufferedInputStream;
@@ -87,8 +87,7 @@ public class ZipDexContainer implements MultiDexContainer<DexBackedDexFile> {
           return entries;
         }
         entries = new TreeMap<String, DexBackedDexFile>();
-        ZipFile zipFile = getZipFile();
-        try {
+        try (ZipFile zipFile = getZipFile()) {
             Enumeration<? extends ZipEntry> entriesEnumeration = zipFile.entries();
 
             while (entriesEnumeration.hasMoreElements()) {
@@ -99,22 +98,17 @@ public class ZipDexContainer implements MultiDexContainer<DexBackedDexFile> {
                 }
 
                 // There might be several dex files in zip entry since DEX v41.
-                InputStream inputStream = zipFile.getInputStream(entry);
-                try {
-                    byte[] buf = ByteStreams.toByteArray(inputStream);
+                try (InputStream inputStream = zipFile.getInputStream(entry)) {
+                    byte[] buf = InputStreamUtil.toByteArray(inputStream);
                     for (int offset = 0, i = 1; offset < buf.length; i++) {
                       DexBackedDexFile dex = new DexBackedDexFile(opcodes, buf, 0, true, offset);
                       entries.put(entry.getName() + (i > 1 ? ("/" + i) : ""), dex);
                       offset += dex.getFileSize();
                     };
-                } finally {
-                    inputStream.close();
                 }
             }
 
             return entries;
-        } finally {
-            zipFile.close();
         }
     }
 
@@ -152,28 +146,18 @@ public class ZipDexContainer implements MultiDexContainer<DexBackedDexFile> {
     }
 
     public boolean isZipFile() {
-        ZipFile zipFile = null;
-        try {
-            zipFile = getZipFile();
+        try (ZipFile zipFile = getZipFile()) {
             return true;
         } catch (IOException ex) {
             return false;
         } catch (NotAZipFileException ex) {
             return false;
-        } finally {
-            if(zipFile != null) {
-                try {
-                    zipFile.close();
-                } catch (IOException ex) {
-                    // just eat it
-                }
-            }
         }
+        // just eat it
     }
 
     protected boolean isDex(@Nonnull ZipFile zipFile, @Nonnull ZipEntry zipEntry) throws IOException {
-        InputStream inputStream = new BufferedInputStream(zipFile.getInputStream(zipEntry));
-        try {
+        try (InputStream inputStream = new BufferedInputStream(zipFile.getInputStream(zipEntry))) {
             DexUtil.verifyDexHeader(inputStream);
         } catch (NotADexFile ex) {
             return false;
@@ -181,8 +165,6 @@ public class ZipDexContainer implements MultiDexContainer<DexBackedDexFile> {
             return false;
         } catch (UnsupportedFile ex) {
             return false;
-        } finally {
-            inputStream.close();
         }
         return true;
     }

@@ -1,17 +1,17 @@
 /*
- * Copyright 2012, Google LLC
+ * Copyright 2024, Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
  *
- *     * Redistributions of source code must retain the above copyright
+ * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above
+ * Redistributions in binary form must reproduce the above
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google LLC nor the names of its
+ * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -28,42 +28,48 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.android.tools.smali.dexlib2.base.value;
+package com.android.tools.smali.util;
 
-import com.android.tools.smali.dexlib2.ValueType;
-import com.android.tools.smali.dexlib2.iface.value.EncodedValue;
-import com.android.tools.smali.dexlib2.iface.value.LongEncodedValue;
-import com.android.tools.smali.dexlib2.formatter.DexFormatter;
+import java.lang.Iterable;
+import java.util.Iterator;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+/**
+ * Combines two iterators into a single iterator. The returned iterator iterates across the elements
+ * in {@code a}, followed by the elements in {@code b}. The source iterators are not polled until
+ * necessary.
+ * <p>
+ * The returned iterator does not support {@code remove()}.
+ */
+public class ChainedIterator<T extends @Nullable Object> implements Iterator<T>, Iterable<T> {
+    Iterator<T> iteratorA;
+    Iterator<T> iteratorB;
 
-public abstract class BaseLongEncodedValue implements LongEncodedValue {
-    @Override
-    public int hashCode() {
-        long value = getValue();
-        int hashCode = (int)value;
-        return hashCode*31 + (int)(value>>>32);
+    public ChainedIterator(Iterable<T> iterableA, Iterable<T> iterableB) {
+        this.iteratorA = iterableA.iterator();
+        this.iteratorB = iterableB.iterator();
     }
 
     @Override
-    public boolean equals(@Nullable Object o) {
-        if (o instanceof LongEncodedValue) {
-            return getValue() == ((LongEncodedValue)o).getValue();
+    public final boolean hasNext() {
+        return iteratorA.hasNext() || iteratorB.hasNext();
+    }
+
+    @Override
+    public final T next() {
+        if (iteratorA.hasNext()) {
+            return iteratorA.next();
         }
-        return false;
+        return iteratorB.next();
     }
 
     @Override
-    public int compareTo(@Nonnull EncodedValue o) {
-        int res = Integer.compare(getValueType(), o.getValueType());
-        if (res != 0) return res;
-        return Long.compare(getValue(), ((LongEncodedValue)o).getValue());
+    public final void remove() {
+        throw new UnsupportedOperationException();
     }
 
-    public int getValueType() { return ValueType.LONG; }
-
-    @Override public String toString() {
-        return DexFormatter.INSTANCE.getEncodedValue(this);
+    @Override
+    public final Iterator<T> iterator() {
+        return this;
     }
 }
