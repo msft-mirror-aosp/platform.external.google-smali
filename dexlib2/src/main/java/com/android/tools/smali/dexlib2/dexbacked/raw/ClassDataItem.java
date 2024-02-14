@@ -31,9 +31,14 @@
 package com.android.tools.smali.dexlib2.dexbacked.raw;
 
 import com.android.tools.smali.dexlib2.AccessFlags;
+import com.android.tools.smali.dexlib2.dexbacked.DexBuffer;
 import com.android.tools.smali.dexlib2.dexbacked.raw.util.DexAnnotator;
 import com.android.tools.smali.dexlib2.util.AnnotatedBytes;
-import com.google.common.base.Joiner;
+import com.android.tools.smali.util.StringUtils;
+
+import java.util.Arrays;
+import java.util.List;
+
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile;
 import com.android.tools.smali.dexlib2.dexbacked.DexReader;
 
@@ -57,7 +62,7 @@ public class ClassDataItem {
 
             @Override
             protected void annotateItem(@Nonnull AnnotatedBytes out, int itemIndex, @Nullable String itemIdentity) {
-                DexReader reader = dexFile.getBuffer().readerAt(out.getCursor());
+                DexReader<? extends DexBuffer> reader = dexFile.getBuffer().readerAt(out.getCursor());
 
                 int staticFieldsSize = reader.readSmallUleb128();
                 out.annotateTo(reader.getOffset(), "static_fields_size = %d", staticFieldsSize);
@@ -125,7 +130,7 @@ public class ClassDataItem {
             }
 
             private int annotateEncodedField(@Nonnull AnnotatedBytes out, @Nonnull DexBackedDexFile dexFile,
-                                             @Nonnull DexReader reader, int previousIndex) {
+                                             @Nonnull DexReader<? extends DexBuffer> reader, int previousIndex) {
                 // large values may be used for the index delta, which cause the cumulative index to overflow upon
                 // addition, effectively allowing out of order entries.
                 int indexDelta = reader.readLargeUleb128();
@@ -135,13 +140,13 @@ public class ClassDataItem {
 
                 int accessFlags = reader.readSmallUleb128();
                 out.annotateTo(reader.getOffset(), "access_flags = 0x%x: %s", accessFlags,
-                        Joiner.on('|').join(AccessFlags.getAccessFlagsForField(accessFlags)));
+                        StringUtils.join(Arrays.asList(AccessFlags.getAccessFlagsForField(accessFlags)), "|"));
 
                 return fieldIndex;
             }
 
             private int annotateEncodedMethod(@Nonnull AnnotatedBytes out, @Nonnull DexBackedDexFile dexFile,
-                                              @Nonnull DexReader reader, int previousIndex) {
+                                              @Nonnull DexReader<? extends DexBuffer> reader, int previousIndex) {
                 // large values may be used for the index delta, which cause the cumulative index to overflow upon
                 // addition, effectively allowing out of order entries.
                 int indexDelta = reader.readLargeUleb128();
@@ -151,7 +156,7 @@ public class ClassDataItem {
 
                 int accessFlags = reader.readSmallUleb128();
                 out.annotateTo(reader.getOffset(), "access_flags = 0x%x: %s", accessFlags,
-                        Joiner.on('|').join(AccessFlags.getAccessFlagsForMethod(accessFlags)));
+                    StringUtils.join(Arrays.asList(AccessFlags.getAccessFlagsForField(accessFlags)), "|"));
 
                 int codeOffset = reader.readSmallUleb128();
                 if (codeOffset == 0) {

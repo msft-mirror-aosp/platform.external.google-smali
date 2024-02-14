@@ -57,10 +57,11 @@ import com.android.tools.smali.dexlib2.iface.DexFile;
 import com.android.tools.smali.dexlib2.iface.reference.Reference;
 import com.android.tools.smali.dexlib2.util.DexUtil;
 import com.android.tools.smali.dexlib2.writer.DexWriter;
-import com.google.common.io.ByteStreams;
+import com.android.tools.smali.util.InputStreamUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.AbstractList;
@@ -193,7 +194,7 @@ public class DexBackedDexFile implements DexFile {
             throws IOException {
         DexUtil.verifyDexHeader(is);
 
-        byte[] buf = ByteStreams.toByteArray(is);
+        byte[] buf = InputStreamUtil.toByteArray(is);
         return new DexBackedDexFile(opcodes, buf, 0, false);
     }
 
@@ -320,7 +321,7 @@ public class DexBackedDexFile implements DexFile {
         public String get(int index) {
             int stringOffset = getOffset(index);
             int stringDataOffset = dexBuffer.readSmallUint(stringOffset);
-            DexReader reader = dataBuffer.readerAt(stringDataOffset);
+            DexReader<? extends DexBuffer> reader = dataBuffer.readerAt(stringDataOffset);
             int utf16Length = reader.readSmallUleb128();
             return reader.readString(utf16Length);
         }
