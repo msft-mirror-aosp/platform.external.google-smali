@@ -57,10 +57,11 @@ import com.android.tools.smali.dexlib2.iface.DexFile;
 import com.android.tools.smali.dexlib2.iface.reference.Reference;
 import com.android.tools.smali.dexlib2.util.DexUtil;
 import com.android.tools.smali.dexlib2.writer.DexWriter;
-import com.google.common.io.ByteStreams;
+import com.android.tools.smali.util.InputStreamUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.AbstractList;
@@ -74,6 +75,7 @@ public class DexBackedDexFile implements DexFile {
 
     @Nonnull private final Opcodes opcodes;
 
+    private final int fileSize;
     private final int stringCount;
     private final int stringStartOffset;
     private final int typeCount;
@@ -90,6 +92,14 @@ public class DexBackedDexFile implements DexFile {
     private final int hiddenApiRestrictionsOffset;
 
     protected DexBackedDexFile(@Nullable Opcodes opcodes, @Nonnull byte[] buf, int offset, boolean verifyMagic) {
+        this(opcodes, buf, offset, verifyMagic, 0);
+    }
+
+    protected DexBackedDexFile(@Nullable Opcodes opcodes,
+                               @Nonnull byte[] buf,
+                               int offset,
+                               boolean verifyMagic,
+                               int header_offset) {
         dexBuffer = new DexBuffer(buf, offset);
         dataBuffer = new DexBuffer(buf, offset + getBaseDataOffset());
 
@@ -101,19 +111,20 @@ public class DexBackedDexFile implements DexFile {
             this.opcodes = opcodes;
         }
 
-        stringCount = dexBuffer.readSmallUint(HeaderItem.STRING_COUNT_OFFSET);
-        stringStartOffset = dexBuffer.readSmallUint(HeaderItem.STRING_START_OFFSET);
-        typeCount = dexBuffer.readSmallUint(HeaderItem.TYPE_COUNT_OFFSET);
-        typeStartOffset = dexBuffer.readSmallUint(HeaderItem.TYPE_START_OFFSET);
-        protoCount = dexBuffer.readSmallUint(HeaderItem.PROTO_COUNT_OFFSET);
-        protoStartOffset = dexBuffer.readSmallUint(HeaderItem.PROTO_START_OFFSET);
-        fieldCount = dexBuffer.readSmallUint(HeaderItem.FIELD_COUNT_OFFSET);
-        fieldStartOffset = dexBuffer.readSmallUint(HeaderItem.FIELD_START_OFFSET);
-        methodCount = dexBuffer.readSmallUint(HeaderItem.METHOD_COUNT_OFFSET);
-        methodStartOffset = dexBuffer.readSmallUint(HeaderItem.METHOD_START_OFFSET);
-        classCount = dexBuffer.readSmallUint(HeaderItem.CLASS_COUNT_OFFSET);
-        classStartOffset = dexBuffer.readSmallUint(HeaderItem.CLASS_START_OFFSET);
-        mapOffset = dexBuffer.readSmallUint(HeaderItem.MAP_OFFSET);
+        fileSize = dexBuffer.readSmallUint(header_offset + HeaderItem.FILE_SIZE_OFFSET);
+        stringCount = dexBuffer.readSmallUint(header_offset + HeaderItem.STRING_COUNT_OFFSET);
+        stringStartOffset = dexBuffer.readSmallUint(header_offset + HeaderItem.STRING_START_OFFSET);
+        typeCount = dexBuffer.readSmallUint(header_offset + HeaderItem.TYPE_COUNT_OFFSET);
+        typeStartOffset = dexBuffer.readSmallUint(header_offset + HeaderItem.TYPE_START_OFFSET);
+        protoCount = dexBuffer.readSmallUint(header_offset + HeaderItem.PROTO_COUNT_OFFSET);
+        protoStartOffset = dexBuffer.readSmallUint(header_offset + HeaderItem.PROTO_START_OFFSET);
+        fieldCount = dexBuffer.readSmallUint(header_offset + HeaderItem.FIELD_COUNT_OFFSET);
+        fieldStartOffset = dexBuffer.readSmallUint(header_offset + HeaderItem.FIELD_START_OFFSET);
+        methodCount = dexBuffer.readSmallUint(header_offset + HeaderItem.METHOD_COUNT_OFFSET);
+        methodStartOffset = dexBuffer.readSmallUint(header_offset + HeaderItem.METHOD_START_OFFSET);
+        classCount = dexBuffer.readSmallUint(header_offset + HeaderItem.CLASS_COUNT_OFFSET);
+        classStartOffset = dexBuffer.readSmallUint(header_offset + HeaderItem.CLASS_START_OFFSET);
+        mapOffset = dexBuffer.readSmallUint(header_offset + HeaderItem.MAP_OFFSET);
 
         MapItem mapItem = getMapItemForSection(ItemType.HIDDENAPI_CLASS_DATA_ITEM);
         if (mapItem != null) {
@@ -121,41 +132,13 @@ public class DexBackedDexFile implements DexFile {
         } else {
             hiddenApiRestrictionsOffset = DexWriter.NO_OFFSET;
         }
-    }
 
-    protected DexBackedDexFile(@Nullable Opcodes opcodes, @Nonnull DexBuffer dexBuffer, @Nonnull DexBuffer dataBuffer, int offset, boolean verifyMagic) {
-        this.dexBuffer = dexBuffer;
-        this.dataBuffer = dataBuffer;
-
-        byte[] headerBuf = dexBuffer.readByteRange(offset, HeaderItem.ITEM_SIZE);
-
-        int dexVersion = getVersion(headerBuf, offset, verifyMagic);
-
-        if (opcodes == null) {
-            this.opcodes = getDefaultOpcodes(dexVersion);
-        } else {
-            this.opcodes = opcodes;
+        int container_off = 0;
+        if (dexVersion >= 41) {
+          container_off = dexBuffer.readSmallUint(header_offset + HeaderItem.CONTAINER_OFF_OFFSET);
         }
-
-        stringCount = dexBuffer.readSmallUint(HeaderItem.STRING_COUNT_OFFSET);
-        stringStartOffset = dexBuffer.readSmallUint(HeaderItem.STRING_START_OFFSET);
-        typeCount = dexBuffer.readSmallUint(HeaderItem.TYPE_COUNT_OFFSET);
-        typeStartOffset = dexBuffer.readSmallUint(HeaderItem.TYPE_START_OFFSET);
-        protoCount = dexBuffer.readSmallUint(HeaderItem.PROTO_COUNT_OFFSET);
-        protoStartOffset = dexBuffer.readSmallUint(HeaderItem.PROTO_START_OFFSET);
-        fieldCount = dexBuffer.readSmallUint(HeaderItem.FIELD_COUNT_OFFSET);
-        fieldStartOffset = dexBuffer.readSmallUint(HeaderItem.FIELD_START_OFFSET);
-        methodCount = dexBuffer.readSmallUint(HeaderItem.METHOD_COUNT_OFFSET);
-        methodStartOffset = dexBuffer.readSmallUint(HeaderItem.METHOD_START_OFFSET);
-        classCount = dexBuffer.readSmallUint(HeaderItem.CLASS_COUNT_OFFSET);
-        classStartOffset = dexBuffer.readSmallUint(HeaderItem.CLASS_START_OFFSET);
-        mapOffset = dexBuffer.readSmallUint(HeaderItem.MAP_OFFSET);
-
-        MapItem mapItem = getMapItemForSection(ItemType.HIDDENAPI_CLASS_DATA_ITEM);
-        if (mapItem != null) {
-            hiddenApiRestrictionsOffset = mapItem.getOffset();
-        } else {
-            hiddenApiRestrictionsOffset = DexWriter.NO_OFFSET;
+        if (container_off != header_offset) {
+          throw new DexUtil.InvalidFile(String.format("Unexpected container offset in header"));
         }
     }
 
@@ -165,6 +148,13 @@ public class DexBackedDexFile implements DexFile {
      */
     public int getBaseDataOffset() {
         return 0;
+    }
+
+    /**
+     * @return Size of single dex file (out of potentially several dex files within a container).
+     */
+    public int getFileSize() {
+        return fileSize;
     }
 
     protected int getVersion(byte[] buf, int offset, boolean verifyMagic) {
@@ -204,7 +194,7 @@ public class DexBackedDexFile implements DexFile {
             throws IOException {
         DexUtil.verifyDexHeader(is);
 
-        byte[] buf = ByteStreams.toByteArray(is);
+        byte[] buf = InputStreamUtil.toByteArray(is);
         return new DexBackedDexFile(opcodes, buf, 0, false);
     }
 
@@ -272,6 +262,12 @@ public class DexBackedDexFile implements DexFile {
                 return getMethodSection();
             case ReferenceType.FIELD:
                 return getFieldSection();
+            case ReferenceType.METHOD_PROTO:
+                return getMethodSection();
+            case ReferenceType.METHOD_HANDLE:
+                return getMethodHandleSection();
+            case ReferenceType.CALL_SITE:
+                return getCallSiteSection();
             default:
                 throw new IllegalArgumentException(String.format("Invalid reference type: %d", referenceType));
         }
@@ -325,7 +321,7 @@ public class DexBackedDexFile implements DexFile {
         public String get(int index) {
             int stringOffset = getOffset(index);
             int stringDataOffset = dexBuffer.readSmallUint(stringOffset);
-            DexReader reader = dataBuffer.readerAt(stringDataOffset);
+            DexReader<? extends DexBuffer> reader = dataBuffer.readerAt(stringDataOffset);
             int utf16Length = reader.readSmallUleb128();
             return reader.readString(utf16Length);
         }

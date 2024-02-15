@@ -30,10 +30,8 @@
 
 package com.android.tools.smali.dexlib2.dexbacked;
 
-import com.android.tools.smali.dexlib2.dexbacked.DexBuffer;
-import com.android.tools.smali.dexlib2.dexbacked.DexReader;
-import junit.framework.Assert;
 import com.android.tools.smali.util.ExceptionWithContext;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class BaseDexReaderLeb128Test {
@@ -248,7 +246,7 @@ public class BaseDexReaderLeb128Test {
 
     private void performTest(int expectedValue, byte[] buf, int expectedLength) {
         DexBuffer dexBuf = new DexBuffer(buf);
-        DexReader reader = dexBuf.readerAt(0);
+        DexReader<? extends DexBuffer> reader = dexBuf.readerAt(0);
         Assert.assertEquals(expectedValue, reader.readSmallUleb128());
         Assert.assertEquals(expectedLength, reader.getOffset());
 
@@ -262,7 +260,7 @@ public class BaseDexReaderLeb128Test {
 
     private void performFailureTest(byte[] buf) {
         DexBuffer dexBuf = new DexBuffer(buf);
-        DexReader reader = dexBuf.readerAt(0);
+        DexReader<? extends DexBuffer> reader = dexBuf.readerAt(0);
         try {
             reader.peekSmallUleb128Size();
             Assert.fail();
