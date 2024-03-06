@@ -46,3 +46,32 @@ java_library_host {
         "auto_android_annotation_stubs",
     ],
 }
+
+
+java_library {
+    name: "smali-dexlib2-device",
+
+    srcs: [
+        "src/main/java/**/*.java",
+        ":third_party-smali-dexlib2",
+    ],
+
+    libs: [
+        "guava",
+    ],
+
+    static_libs: [
+        "jsr305",
+    ],
+
+    sdk_version: "system_server_current",
+    min_sdk_version: "33",
+    apex_available: [
+        "com.android.adservices"
+    ],
+
+    optimize: {
+        enabled: true,
+        shrink: true,
+    },
+}
