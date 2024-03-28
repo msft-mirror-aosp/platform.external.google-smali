@@ -27,6 +27,12 @@
         "jsr305",
         "auto_android_annotation_stubs",
     ],
+
+    errorprone: {
+        javacflags: [
+            "-Xep:ComparableType:WARN",
+        ],
+    },
 }
 
 java_library_host {
@@ -45,6 +51,12 @@ java_library_host {
         "jsr305",
         "auto_android_annotation_stubs",
     ],
+
+    errorprone: {
+        javacflags: [
+            "-Xep:ComparableType:WARN",
+        ],
+    },
 }
 
 
@@ -73,5 +85,11 @@ java_library {
     optimize: {
         enabled: true,
         shrink: true,
+    },
+
+    errorprone: {
+        javacflags: [
+            "-Xep:ComparableType:WARN",
+        ],
     },
 }
