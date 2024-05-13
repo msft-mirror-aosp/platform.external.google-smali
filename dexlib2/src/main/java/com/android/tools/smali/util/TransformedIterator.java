@@ -32,7 +32,6 @@ package com.android.tools.smali.util;
 
 import java.util.Iterator;
 import java.util.function.Function;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * An iterator that will return the results of applying {@code transformFunction} to each element of
@@ -40,10 +39,16 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <p>
  * The returned iterator supports {@code remove()} if {@code backingIterator} does.
  */
-public class TransformedIterator<F extends @Nullable Object, T extends @Nullable Object>
-        implements Iterator<T> {
+public class TransformedIterator<F extends Object, T extends Object>
+        implements Iterator<T>, Iterable<T> {
     final Iterator<? extends F> backingIterator;
     final Function<F, T> transformFunction;
+
+    public TransformedIterator(Iterable<? extends F> backingIterable,
+            Function<F, T> transformFunction) {
+        this.backingIterator = backingIterable.iterator();
+        this.transformFunction = transformFunction;
+    }
 
     public TransformedIterator(Iterator<? extends F> backingIterator,
             Function<F, T> transformFunction) {
@@ -64,5 +69,10 @@ public class TransformedIterator<F extends @Nullable Object, T extends @Nullable
     @Override
     public final void remove() {
         backingIterator.remove();
+    }
+
+    @Override
+    public final Iterator<T> iterator() {
+        return this;
     }
 }
