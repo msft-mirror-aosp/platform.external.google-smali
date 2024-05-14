@@ -32,7 +32,6 @@ package com.android.tools.smali.util;
 
 import java.lang.Iterable;
 import java.util.Iterator;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Combines two iterators into a single iterator. The returned iterator iterates across the elements
@@ -41,13 +40,18 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <p>
  * The returned iterator does not support {@code remove()}.
  */
-public class ChainedIterator<T extends @Nullable Object> implements Iterator<T>, Iterable<T> {
+public class ChainedIterator<T extends Object> implements Iterator<T>, Iterable<T> {
     Iterator<T> iteratorA;
     Iterator<T> iteratorB;
 
     public ChainedIterator(Iterable<T> iterableA, Iterable<T> iterableB) {
         this.iteratorA = iterableA.iterator();
         this.iteratorB = iterableB.iterator();
+    }
+
+    public ChainedIterator(Iterator<T> iteratorA, Iterator<T> iteratorB) {
+        this.iteratorA = iteratorA;
+        this.iteratorB = iteratorB;
     }
 
     @Override
