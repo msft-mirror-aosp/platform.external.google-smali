@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
- java_library_host {
+java_library_host {
     name: "smali-dexlib2",
 
     srcs: [
@@ -23,9 +23,7 @@
     ],
 
     static_libs: [
-        "guava",
         "jsr305",
-        "auto_android_annotation_stubs",
     ],
 
     errorprone: {
@@ -43,13 +41,8 @@ java_library_host {
         ":third_party-smali-dexlib2",
     ],
 
-    libs: [
-        "guava",
-    ],
-
     static_libs: [
         "jsr305",
-        "auto_android_annotation_stubs",
     ],
 
     errorprone: {
@@ -59,7 +52,6 @@ java_library_host {
     },
 }
 
-
 java_library {
     name: "smali-dexlib2-device",
 
@@ -68,19 +60,12 @@ java_library {
         ":third_party-smali-dexlib2",
     ],
 
-    libs: [
-        "guava",
-    ],
-
     static_libs: [
         "jsr305",
     ],
 
     sdk_version: "system_server_current",
     min_sdk_version: "33",
-    apex_available: [
-        "com.android.adservices"
-    ],
 
     optimize: {
         enabled: true,
@@ -92,4 +77,8 @@ java_library {
             "-Xep:ComparableType:WARN",
         ],
     },
+
+    apex_available: [
+        "//apex_available:anyapex",
+    ],
 }
