@@ -30,18 +30,84 @@
 
 package com.android.tools.smali.util;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
-
-import org.checkerframework.checker.nullness.qual.Nullable;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
 
 public final class IteratorUtils {
 
-    public static <T extends @Nullable Object> T getLast(Iterator<T> iterator) {
+    public static <T extends Object> T getLast(Iterator<T> iterator) {
         while (true) {
             T current = iterator.next();
             if (!iterator.hasNext()) {
                 return current;
             }
         }
+    }
+
+    public static <T extends Object> AbstractIterator<T> filter(
+            Iterable<T> unfiltered, Predicate<? super T> retainIfTrue) {
+        return filter(unfiltered.iterator(), retainIfTrue);
+    }
+
+    public static <T extends Object> AbstractIterator<T> filter(
+            Iterator<T> unfiltered, Predicate<? super T> retainIfTrue) {
+        return new AbstractIterator<T>() {
+            @Override
+            protected T computeNext() {
+                while (unfiltered.hasNext()) {
+                    T next = unfiltered.next();
+                    if (retainIfTrue.test(next)) {
+                        return next;
+                    }
+                }
+                return endOfData();
+            }
+        };
+    }
+
+    public static <T extends Object> List<T> toList(Iterable<T> iterable) {
+        return toList(iterable.iterator());
+    }
+
+    public static <T extends Object> List<T> toList(Iterator<T> iterator) {
+        ArrayList<T> list = new ArrayList<T>();
+        while (iterator.hasNext()) {
+            list.add(iterator.next());
+        }
+        return list;
+    }
+
+    public static <T extends Object> void addAll(Collection<T> collection, Iterator<T> iterator) {
+        while (iterator.hasNext()) {
+            collection.add(iterator.next());
+        }
+    }
+
+    public static boolean elementsEqual(Iterator<?> iterator1, Iterator<?> iterator2) {
+        while (iterator1.hasNext()) {
+            if (!iterator2.hasNext()) {
+                return false;
+            }
+            Object o1 = iterator1.next();
+            Object o2 = iterator2.next();
+            if (!Objects.equals(o1, o2)) {
+                return false;
+            }
+        }
+        return !iterator2.hasNext();
+    }
+
+    public static int size(Iterable<?> iterable) {
+        Iterator<?> iterator = iterable.iterator();
+        int count = 0;
+        while (iterator.hasNext()) {
+            count++;
+            iterator.next();
+        }
+        return count;
     }
 }
