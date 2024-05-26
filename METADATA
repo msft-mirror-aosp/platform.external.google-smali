@@ -8,12 +8,12 @@ third_party {
   license_type: NOTICE
   last_upgrade_date {
     year: 2024
-    month: 2
-    day: 7
+    month: 5
+    day: 13
   }
   identifier {
     type: "Git"
     value: "https://github.com/google/smali"
-    version: "3.0.4"
+    version: "3.0.7"
   }
 }
