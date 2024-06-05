@@ -30,8 +30,11 @@
 
 package com.android.tools.smali.dexlib2;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
+import static java.util.Collections.unmodifiableMap;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import com.android.tools.smali.util.ExceptionWithContext;
 
 import javax.annotation.Nonnull;
@@ -47,17 +50,31 @@ public class MethodHandleType {
     public static final int INVOKE_DIRECT = 7;
     public static final int INVOKE_INTERFACE = 8;
 
-    private static final BiMap<Integer, String> methodHandleTypeNames = new ImmutableBiMap.Builder<Integer, String>()
-            .put(STATIC_PUT, "static-put")
-            .put(STATIC_GET, "static-get")
-            .put(INSTANCE_PUT, "instance-put")
-            .put(INSTANCE_GET, "instance-get")
-            .put(INVOKE_STATIC, "invoke-static")
-            .put(INVOKE_INSTANCE, "invoke-instance")
-            .put(INVOKE_CONSTRUCTOR, "invoke-constructor")
-            .put(INVOKE_DIRECT, "invoke-direct")
-            .put(INVOKE_INTERFACE, "invoke-interface")
-            .build();
+    private static final Map<Integer, String> methodHandleTypeNames;
+
+    static {
+        Map<Integer, String> temp = new HashMap<>();
+        temp.put(STATIC_PUT, "static-put");
+        temp.put(STATIC_GET, "static-get");
+        temp.put(INSTANCE_PUT, "instance-put");
+        temp.put(INSTANCE_GET, "instance-get");
+        temp.put(INVOKE_STATIC, "invoke-static");
+        temp.put(INVOKE_INSTANCE, "invoke-instance");
+        temp.put(INVOKE_CONSTRUCTOR, "invoke-constructor");
+        temp.put(INVOKE_DIRECT, "invoke-direct");
+        temp.put(INVOKE_INTERFACE, "invoke-interface");
+        methodHandleTypeNames = unmodifiableMap(temp);
+    }
+
+    private static final Map<String, Integer> inverse = getInverse();
+
+    private static Map<String, Integer> getInverse() {
+        HashMap<String, Integer> namesToTypes = new HashMap<>();
+        for (Map.Entry<Integer, String> entry : methodHandleTypeNames.entrySet()) {
+            namesToTypes.put(entry.getValue(), entry.getKey());
+        }
+        return unmodifiableMap(namesToTypes);
+    }
 
     @Nonnull public static String toString(int methodHandleType) {
         String val = methodHandleTypeNames.get(methodHandleType);
@@ -68,7 +85,7 @@ public class MethodHandleType {
     }
 
     public static int getMethodHandleType(String methodHandleType) {
-        Integer ret = methodHandleTypeNames.inverse().get(methodHandleType);
+        Integer ret = inverse.get(methodHandleType);
         if (ret == null) {
             throw new ExceptionWithContext("Invalid method handle type: %s", methodHandleType);
         }

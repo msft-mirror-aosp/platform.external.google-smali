@@ -30,17 +30,16 @@
 
 package com.android.tools.smali.dexlib2;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.RangeMap;
+import static com.android.tools.smali.dexlib2.VersionMap.NO_VERSION;
+import static com.android.tools.smali.dexlib2.VersionMap.mapApiToArtVersion;
+import static com.android.tools.smali.dexlib2.VersionMap.mapArtVersionToApi;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.EnumMap;
 import java.util.HashMap;
 
-import static com.android.tools.smali.dexlib2.VersionMap.NO_VERSION;
-import static com.android.tools.smali.dexlib2.VersionMap.mapApiToArtVersion;
-import static com.android.tools.smali.dexlib2.VersionMap.mapArtVersionToApi;
+import com.android.tools.smali.util.UnmodifiableRangeMap;
 
 public class Opcodes {
 
@@ -94,7 +93,7 @@ public class Opcodes {
         }
 
         opcodeValues = new EnumMap<Opcode, Short>(Opcode.class);
-        opcodesByName = Maps.newHashMap();
+        opcodesByName = new HashMap<>();
 
         int version;
         if (isArt()) {
@@ -104,7 +103,7 @@ public class Opcodes {
         }
 
         for (Opcode opcode: Opcode.values()) {
-            RangeMap<Integer, Short> versionToValueMap;
+            UnmodifiableRangeMap<Integer, Short> versionToValueMap;
 
             if (isArt()) {
                 versionToValueMap = opcode.artVersionToValueMap;
